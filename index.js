@@ -14,7 +14,7 @@ const client = new Client({
 });
 
 const port = process.env.PORT || 10000;
-const wss = new WebSocket.Server({ port });
+const wss = new WebSocket.Server({ port: port, host: '0.0.0.0' });
 
 async function getRobloxInfo(userId) {
     try {
@@ -36,9 +36,7 @@ async function handleWhitelist(userId, member, channel, isInteraction = false) {
         const err = "Invalid Roblox User ID.";
         return isInteraction ? { content: err, ephemeral: true } : channel.send(err);
     }
-
     await db.set(`whitelist_${userId}`, true);
-
     try {
         const newNickname = `${info.displayName} (@${info.username})`;
         if (member && member.manageable) {
@@ -47,7 +45,6 @@ async function handleWhitelist(userId, member, channel, isInteraction = false) {
     } catch (e) {
         console.log("Nickname error: " + e.message);
     }
-
     const embed = new EmbedBuilder()
         .setTitle('✅ Player Whitelisted')
         .setColor(0x00FF00)
@@ -59,7 +56,6 @@ async function handleWhitelist(userId, member, channel, isInteraction = false) {
         )
         .setFooter({ text: `Whitelisted by ${member.user.tag}` })
         .setTimestamp();
-
     return { embeds: [embed] };
 }
 
