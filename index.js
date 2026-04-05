@@ -34,18 +34,18 @@ async function handleWhitelist(userId, member, channel, isInteraction = false) {
     const info = await getRobloxInfo(userId);
     if (!info) {
         const err = "Invalid Roblox User ID.";
-        return isInteraction ? err : channel.send(err);
+        return isInteraction ? { content: err, ephemeral: true } : channel.send(err);
     }
 
     await db.set(`whitelist_${userId}`, true);
 
     try {
         const newNickname = `${info.displayName} (@${info.username})`;
-        if (member.manageable) {
+        if (member && member.manageable) {
             await member.setNickname(newNickname);
         }
     } catch (e) {
-        console.log("Failed to set nickname: " + e.message);
+        console.log("Nickname error: " + e.message);
     }
 
     const embed = new EmbedBuilder()
@@ -65,18 +65,15 @@ async function handleWhitelist(userId, member, channel, isInteraction = false) {
 
 client.on('messageCreate', async (message) => {
     if (message.author.bot || !message.content.startsWith('!whitelist')) return;
-    
     const args = message.content.split(' ');
     const userId = args[1];
     if (!userId) return message.reply("Usage: !whitelist <UserId>");
-
     const result = await handleWhitelist(userId, message.member, message.channel);
-    if (result.embeds) message.reply(result);
+    if (result && result.embeds) message.reply(result);
 });
 
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand() || interaction.commandName !== 'whitelist') return;
-    
     const userId = interaction.options.getString('userid');
     const result = await handleWhitelist(userId, interaction.member, interaction.channel, true);
     await interaction.reply(result);
